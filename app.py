@@ -2,32 +2,19 @@ from flask import Flask, render_template, request
 from markupsafe import escape
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from dotenv import dotenv_values
+
+from models import InfoModel, db
+
+config = dotenv_values(".env")
 # from models import db, InfoModel
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:postgres@127.0.0.1:5432/pg"
+app.config['SQLALCHEMY_DATABASE_URI'] = config['CONNECTION_STRING']
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-
-db = SQLAlchemy(app=app)
 db.init_app(app)
 app.app_context().push()
-
-
-class InfoModel(db.Model):
-    __tablename__ = 'info_table'
-
-    id = db.Column(db.Integer, primary_key=True, )
-    name = db.Column(db.String())
-    age = db.Column(db.Integer())
-
-    def __init__(self, name, age):
-        self.name = name
-        self.age = age
-
-    def __repr__(self):
-        return f"{self.name}:{self.age}"
-
 
 migrate = Migrate(app, db)
 
@@ -45,13 +32,15 @@ def login():
         results = [{
             "name": user.name,
             "age": user.age,
+            "eye_colour": user.eye_colour,
         } for user in users]
         return {"user count": len(results), "users": results}
 
     if request.method == 'POST':
         name = request.form['name']
         age = request.form['age']
-        new_user = InfoModel(name=name, age=age)
+        eye_colour = request.form['eye_colour']
+        new_user = InfoModel(name=name, age=age, eye_colour=eye_colour)
         db.session.add(new_user)
         db.session.commit()
         return f"Done!!"
