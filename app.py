@@ -1,22 +1,81 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
 from markupsafe import escape
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from dotenv import dotenv_values
-
-from models import InfoModel, db
+from models.user_model import UserModel, login, db
+# from models.info_model import InfoModel, db
+from flask_login import current_user, login_required, logout_user, login_user
 
 config = dotenv_values(".env")
 # from models import db, InfoModel
 
 app = Flask(__name__)
+app.secret_key = 'asdf'
 app.config['SQLALCHEMY_DATABASE_URI'] = config['CONNECTION_STRING']
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
+login.init_app(app)
+login.login_view = 'login'
+
+
+@app.before_first_request
+def create_table():
+    db.create_all()
+
+
 app.app_context().push()
 
 migrate = Migrate(app, db)
+
+
+@app.route('/blogs')
+@login_required
+def blog():
+    return render_template('blog.html')
+
+
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    if current_user.is_authenticated:
+        return redirect('/blogs')
+
+    if request.method == 'POST':
+        email = request.form['email']
+        user = UserModel.query.filter_by(email=email).first()
+        if user is not None and user.check_password(request.form['password']):
+            login_user(user)
+            return redirect('/blogs')
+
+    return render_template('login.html')
+
+
+@app.route('/register', methods=['POST', 'GET'])
+def register():
+    if current_user.is_authenticated:
+        return redirect('/blogs')
+
+    if request.method == 'POST':
+        email = request.form['email']
+        username = request.form['username']
+        password = request.form['password']
+
+        if UserModel.query.filter_by(email=email).first():
+            return ('Email already Present')
+
+        user = UserModel(email=email, username=username)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        return redirect('/login')
+    return render_template('register.html')
+
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect('/blogs')
 
 
 @app.route("/")
@@ -25,8 +84,8 @@ def home_route():
     return "<p>Hello, Home Route!</p>"
 
 
-@app.route('/login', methods=['POST', 'GET'])
-def login():
+# @app.route('/login', methods=['POST', 'GET'])
+# def login():
     if request.method == 'GET':
         users = InfoModel.query.all()
         results = [{
