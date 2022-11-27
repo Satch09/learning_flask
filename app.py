@@ -19,16 +19,13 @@ db.init_app(app)
 login.init_app(app)
 login.login_view = 'login'
 
-
 @app.before_first_request
 def create_table():
     db.create_all()
 
-
 app.app_context().push()
 
 migrate = Migrate(app, db)
-
 
 @app.route('/blogs')
 @login_required
@@ -46,7 +43,6 @@ def login():
         user = UserModel.query.filter_by(email=email).first()
         if user is not None and user.check_password(request.form['password']):
             login_user(user)
-            app.
             return redirect('/blogs')
 
     return render_template('login.html')
