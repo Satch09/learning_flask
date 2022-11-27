@@ -7,10 +7,10 @@ from models.user_model import UserModel, login, db
 # from models.info_model import InfoModel, db
 from flask_login import current_user, login_required, logout_user, login_user
 
-config = dotenv_values(".env")
 # from models import db, InfoModel
 
 app = Flask(__name__)
+config = dotenv_values(".env")
 app.secret_key = 'asdf'
 app.config['SQLALCHEMY_DATABASE_URI'] = config['CONNECTION_STRING']
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -46,6 +46,7 @@ def login():
         user = UserModel.query.filter_by(email=email).first()
         if user is not None and user.check_password(request.form['password']):
             login_user(user)
+            app.
             return redirect('/blogs')
 
     return render_template('login.html')
@@ -68,7 +69,7 @@ def register():
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
-        return redirect('/login')
+        return redirect('/blogs')
     return render_template('register.html')
 
 
