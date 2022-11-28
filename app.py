@@ -1,13 +1,11 @@
+import datetime
 from flask import Flask, render_template, request, redirect
 from markupsafe import escape
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from dotenv import dotenv_values
 from models.user_model import UserModel, login, db
-# from models.info_model import InfoModel, db
 from flask_login import current_user, login_required, logout_user, login_user
-
-# from models import db, InfoModel
 
 app = Flask(__name__)
 config = dotenv_values(".env")
@@ -16,16 +14,29 @@ app.config['SQLALCHEMY_DATABASE_URI'] = config['CONNECTION_STRING']
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
-login.init_app(app)
 login.login_view = 'login'
+login.init_app(app)
+
 
 @app.before_first_request
 def create_table():
     db.create_all()
 
+
+# @app.before_request  # type: ignore
+# def before_request():
+#     "Session time out method"
+
+#     db.session.permanent = True
+#     app.permanent_session_lifetime = datetime.timedelta(minutes=1)
+#     db.session.modified = True
+#     return redirect('/login')
+
+
 app.app_context().push()
 
 migrate = Migrate(app, db)
+
 
 @app.route('/blogs')
 @login_required
@@ -79,27 +90,6 @@ def logout():
 def home_route():
     app.logger.debug('Home route hit!')
     return "<p>Hello, Home Route!</p>"
-
-
-# @app.route('/login', methods=['POST', 'GET'])
-# def login():
-    if request.method == 'GET':
-        users = InfoModel.query.all()
-        results = [{
-            "name": user.name,
-            "age": user.age,
-            "eye_colour": user.eye_colour,
-        } for user in users]
-        return {"user count": len(results), "users": results}
-
-    if request.method == 'POST':
-        name = request.form['name']
-        age = request.form['age']
-        eye_colour = request.form['eye_colour']
-        new_user = InfoModel(name=name, age=age, eye_colour=eye_colour)
-        db.session.add(new_user)
-        db.session.commit()
-        return f"Done!!"
 
 
 @app.route("/local/")
