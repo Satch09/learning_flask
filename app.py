@@ -9,9 +9,10 @@ from flask_login import current_user, login_required, logout_user, login_user
 
 app = Flask(__name__)
 config = dotenv_values(".env")
-app.secret_key = 'asdf'
+app.secret_key = config['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = config['CONNECTION_STRING']
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.app_context().push()
 
 db.init_app(app)
 login.login_view = 'login'
@@ -22,18 +23,6 @@ login.init_app(app)
 def create_table():
     db.create_all()
 
-
-# @app.before_request  # type: ignore
-# def before_request():
-#     "Session time out method"
-
-#     db.session.permanent = True
-#     app.permanent_session_lifetime = datetime.timedelta(minutes=1)
-#     db.session.modified = True
-#     return redirect('/login')
-
-
-app.app_context().push()
 
 migrate = Migrate(app, db)
 
