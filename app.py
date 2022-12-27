@@ -1,5 +1,5 @@
-import datetime
-from flask import Flask, render_template, request, redirect
+from datetime import timedelta
+from flask import Flask, render_template, request, redirect, session
 from markupsafe import escape
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -18,13 +18,19 @@ db.init_app(app)
 login.login_view = 'login'
 login.init_app(app)
 
+migrate = Migrate(app, db)
 
 @app.before_first_request
 def create_table():
     db.create_all()
 
 
-migrate = Migrate(app, db)
+@app.before_request
+def session_handler():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=1)
+
+
 
 
 @app.route('/blogs')
